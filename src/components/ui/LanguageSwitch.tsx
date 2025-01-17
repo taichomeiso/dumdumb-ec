@@ -1,59 +1,35 @@
-
 'use client';
 
-import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { ChevronDown } from 'lucide-react';
+import React from 'react';
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const languages = [
-  { code: 'ja', label: '日本語', flag: '🇯🇵' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'zh', label: '中文', flag: '🇨🇳' },
-  { code: 'ko', label: '한국어', flag: '🇰🇷' }
-];
+  { label: "日本語", value: "ja" },
+  { label: "English", value: "en" },
+] as const;
+
+type LanguageType = typeof languages[number]["value"];
 
 export function LanguageSwitch() {
   const { language, setLanguage } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
 
-  const currentLanguage = languages.find(lang => lang.code === language);
+  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value as LanguageType;
+    setLanguage(value);
+    localStorage.setItem("language", value);
+  };
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-white border-2 border-black hover:bg-gray-50 transition-colors"
-      >
-        <span>{currentLanguage?.flag}</span>
-        <span className="font-medium text-black">{currentLanguage?.label}</span>
-        <ChevronDown className={`w-4 h-4 text-black transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute right-0 mt-2 w-40 bg-white border-2 border-black rounded-lg shadow-lg overflow-hidden z-20">
-            {languages.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => {
-                  setLanguage(lang.code as any);
-                  setIsOpen(false);
-                }}
-                className={`w-full px-4 py-2 text-left flex items-center space-x-2 hover:bg-gray-50 transition-colors
-                  ${language === lang.code ? 'bg-gray-100 font-bold' : 'font-medium'} text-black`}
-              >
-                <span>{lang.flag}</span>
-                <span>{lang.label}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+    <select
+      value={language}
+      onChange={handleChange}
+      className="bg-transparent border border-gray-300 rounded-md px-2 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black"
+    >
+      {languages.map((lang) => (
+        <option key={lang.value} value={lang.value}>
+          {lang.label}
+        </option>
+      ))}
+    </select>
   );
 }
-'use client'; import React, { useState } from 'react'; ...

@@ -1,5 +1,5 @@
-import ECStore from '@/components/ECStore';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return <ECStore />;
+  redirect('/store');
 }

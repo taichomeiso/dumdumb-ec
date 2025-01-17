@@ -1,10 +1,20 @@
-
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Outfit, M_PLUS_1, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
+const outfit = Outfit({ subsets: ["latin"] });
+const mplus1 = M_PLUS_1({
+  weight: ['400', '500', '700', '900'],
+  subsets: ["latin"],
+  display: 'swap',
+});
+const notoSansJP = Noto_Sans_JP({
+  weight: ['400', '500', '700', '900'],
+  subsets: ["latin"],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "dumdumb",
@@ -18,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} ${notoSansJP.variable}`} suppressHydrationWarning>
         <Providers>
           <div className="min-h-screen flex flex-col">
             {children}
@@ -28,4 +38,3 @@ export default function RootLayout({
     </html>
   );
 }
-import { Outfit, M_PLUS_1, Noto_Sans_JP } from 'next/font/google'; ...

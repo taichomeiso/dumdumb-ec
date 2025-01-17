@@ -5,13 +5,13 @@ import { useSession, signOut } from "next-auth/react"
 import { ShoppingCart, Heart, Search, User } from "lucide-react"
 import { Button } from "./ui/button"
 import { LanguageSwitch } from "./ui/LanguageSwitch"
-import { useEffect, useState } from "react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
+import { useFavoriteStore } from "@/store/favoriteStore"
 
 interface HeaderProps {
   cartItemsCount?: number;
@@ -20,25 +20,7 @@ interface HeaderProps {
 export function Header({ cartItemsCount = 0 }: HeaderProps) {
   const { data: session } = useSession()
   const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
-  const [favoritesCount, setFavoritesCount] = useState(0);
-
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchFavorites();
-    }
-  }, [session?.user?.id]);
-
-  const fetchFavorites = async () => {
-    try {
-      const response = await fetch('/api/favorites');
-      if (response.ok) {
-        const data = await response.json();
-        setFavoritesCount(data.length);
-      }
-    } catch (error) {
-      console.error('Error fetching favorites:', error);
-    }
-  };
+  const { favoritesCount } = useFavoriteStore()
 
   return (
     <header className="bg-white border-b-2 border-black sticky top-0 z-50">
