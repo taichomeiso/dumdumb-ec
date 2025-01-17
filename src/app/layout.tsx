@@ -1,21 +1,14 @@
-import { Outfit, M_PLUS_1, Noto_Sans_JP } from 'next/font/google';
-import './globals.css';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import Providers from "@/components/Providers";
 
-const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-outfit',
-});
+const inter = Inter({ subsets: ["latin"] });
 
-const mPlus = M_PLUS_1({
-  subsets: ['latin'],
-  variable: '--font-mplus',
-});
-
-const notoSans = Noto_Sans_JP({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-notosans',
-});
+export const metadata: Metadata = {
+  title: "dumdumb",
+  description: "Your favorite online shopping destination",
+};
 
 export default function RootLayout({
   children,
@@ -23,9 +16,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
-      <body className={`${outfit.variable} ${mPlus.variable} ${notoSans.variable}`}>
-        {children}
+    <html lang="ja" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+        <Providers>
+          <div className="min-h-screen flex flex-col">
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   );

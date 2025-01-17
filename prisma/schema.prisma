@@ -7,22 +7,98 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model GuestUser {
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+  cartItems CartItem[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  password      String?
+  provider      String?   
+  accounts      Account[]
+  sessions      Session[]
+  favorites     Product[] @relation("UserFavorites")
+  cartItems     CartItem[]
+  orders        Order[]
+  reviews       Review[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 model Product {
-  id          String        @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   price       Int
-  description String
+  description String      @db.Text
   image       String
-  category    String        @default("その他")
-  stock       Int          @default(0)  // 在庫数を追加
-  stockAlert  Int          @default(5)  // 在庫アラート閾値
-  isNew       Boolean       @default(false)
-  isFeatured  Boolean       @default(false)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  CartItem    CartItem[]
-  OrderItem   OrderItem[]
-  StockLog    StockLog[]    // 在庫履歴との関連
+  category    String      @default("other")
+  stock       Int         @default(0)
+  stockAlert  Int         @default(5)
+  isNew       Boolean     @default(false)
+  isFeatured  Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  stockLogs   StockLog[]
+  favoritedBy User[]      @relation("UserFavorites")
+  reviews     Review[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?  @db.Text
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([productId])
 }
 
 model Admin {
@@ -33,27 +109,37 @@ model Admin {
 }
 
 model CartItem {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  quantity  Int
-  size      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  product   Product  @relation(fields: [productId], references: [id])
+  id          String     @id @default(cuid())
+  userId      String?
+  guestUserId String?
+  productId   String
+  quantity    Int
+  size        String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestUser   GuestUser? @relation(fields: [guestUserId], references: [id], onDelete: Cascade)
+  product     Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([guestUserId])
+  @@index([productId])
 }
 
 model Order {
   id            String      @id @default(cuid())
   userId        String
   total         Int
-  status        String      @default("pending")
-  shippingInfo  Json
-  paymentInfo   Json?
-  emailSent     Boolean     @default(false)  // メール送信状態を追加
+  status        OrderStatus @default(PENDING)
+  shippingInfo  ShippingInfo?
+  paymentInfo   PaymentInfo?
+  emailSent     Boolean     @default(false)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderItems    OrderItem[]
+
+  @@index([userId])
 }
 
 model OrderItem {
@@ -63,17 +149,68 @@ model OrderItem {
   quantity  Int
   size      String?
   price     Int
-  order     Order    @relation(fields: [orderId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
 
-// 在庫履歴テーブルを追加
 model StockLog {
-  id          String   @id @default(cuid())
-  productId   String
-  quantity    Int      // 変更量（増減）
-  type        String   // "in" or "out"
-  reason      String   // "purchase", "adjustment", "order" など
-  createdAt   DateTime @default(now())
-  product     Product  @relation(fields: [productId], references: [id])
+  id        String     @id @default(cuid())
+  productId String
+  quantity  Int
+  type      StockType
+  reason    String
+  createdAt DateTime   @default(now())
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ShippingInfo {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  address   String
+  city      String
+  state     String
+  zipCode   String
+  country   String
+  phone     String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model PaymentInfo {
+  id            String        @id @default(cuid())
+  orderId       String       @unique
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus
+  transactionId String?
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum StockType {
+  IN
+  OUT
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
 }
