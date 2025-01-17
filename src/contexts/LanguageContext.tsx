@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState } from 'react';
@@ -62,3 +63,4 @@ export function useLanguage() {
   }
   return context;
 }
+'use client'; import React, { createContext, useContext, useState, useEffect } from 'react'; ...

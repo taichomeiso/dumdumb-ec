@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -55,3 +56,4 @@ export function LanguageSwitch() {
     </div>
   );
 }
+'use client'; import React, { useState } from 'react'; ...

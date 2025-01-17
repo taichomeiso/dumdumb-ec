@@ -1,3 +1,4 @@
+
 export const translations = {
   ja: {
     search: "商品を検索",
@@ -176,3 +177,4 @@ export const translations = {
     }
   }
 };
+export const translations = {...}

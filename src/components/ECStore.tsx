@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -268,3 +269,7 @@ export default function ECStore() {
     </div>
   );
 }
+'use client';
+
+import React, { useState, useEffect } from 'react'...
+

@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -27,3 +28,4 @@ export default function RootLayout({
     </html>
   );
 }
+import { Outfit, M_PLUS_1, Noto_Sans_JP } from 'next/font/google'; ...
