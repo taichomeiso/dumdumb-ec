@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GETメソッドを追加
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+type Props = {
+  params: {
+    id: string
+  }
+}
+
+export async function GET(request: Request, { params }: Props) {
+  if (!params?.id) {
+    return NextResponse.json(
+      { error: '商品IDが指定されていません' },
+      { status: 400 }
+    );
+  }
+
   try {
     const product = await prisma.product.findUnique({
       where: {
@@ -30,11 +39,14 @@ export async function GET(
   }
 }
 
-// DELETEメソッド
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, { params }: Props) {
+  if (!params?.id) {
+    return NextResponse.json(
+      { error: '商品IDが指定されていません' },
+      { status: 400 }
+    );
+  }
+
   try {
     const product = await prisma.product.delete({
       where: {

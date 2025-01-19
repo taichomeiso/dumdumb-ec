@@ -1,44 +1,41 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-
-    const product = await prisma.product.create({
-      data: {
-        name: body.name,
-        price: body.price,
-        description: body.description,
-        image: body.image,
-        category: body.category,
-        stock: body.stock,
-        isNew: body.isNew,
-        isFeatured: body.isFeatured
-      }
-    });
-
-    return NextResponse.json(product);
-  } catch (error) {
-    console.error('Product creation error:', error);
-    return NextResponse.json(
-      { error: '商品の登録に失敗しました' },
-      { status: 500 }
-    );
-  }
-}
+export const revalidate = 60; // 1分ごとに再検証
 
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        image: true,
+        stock: true,
+        stockAlert: true,
+        isNew: true,
+        category: true,
+        createdAt: true
+      },
       orderBy: {
         createdAt: 'desc'
+      },
+      where: {
+        OR: [
+          { isFeatured: true },
+          { isNew: true },
+          { stock: { gt: 0 } }
+        ]
       }
     });
 
-    return NextResponse.json(products);
+    return NextResponse.json(products, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=300'
+      }
+    });
   } catch (error) {
-    console.error('Products fetch error:', error);
+    console.error('Failed to fetch products:', error);
     return NextResponse.json(
       { error: 'Failed to fetch products' },
       { status: 500 }

@@ -1,29 +1,40 @@
+'use client';
+
 import { create } from 'zustand';
 import { Product } from '@/types/product';
 
 interface FavoriteStore {
-  favorites: Product[];
   favoritesCount: number;
+  favorites: Product[];
+  setFavoritesCount: (count: number) => void;
   setFavorites: (favorites: Product[]) => void;
   addFavorite: (product: Product) => void;
   removeFavorite: (productId: string) => void;
-  setFavoritesCount: (count: number) => void;
+  refreshCount: () => Promise<void>;
 }
 
 export const useFavoriteStore = create<FavoriteStore>((set) => ({
-  favorites: [],
   favoritesCount: 0,
-  setFavorites: (favorites) => set({ 
-    favorites,
-    favoritesCount: favorites.length
-  }),
+  favorites: [],
+  setFavoritesCount: (count) => set({ favoritesCount: count }),
+  setFavorites: (favorites) => set({ favorites }),
   addFavorite: (product) => set((state) => ({
     favorites: [...state.favorites, product],
     favoritesCount: state.favoritesCount + 1
   })),
   removeFavorite: (productId) => set((state) => ({
-    favorites: state.favorites.filter((f) => f.id !== productId),
+    favorites: state.favorites.filter(p => p.id !== productId),
     favoritesCount: state.favoritesCount - 1
   })),
-  setFavoritesCount: (count) => set({ favoritesCount: count })
+  refreshCount: async () => {
+    try {
+      const response = await fetch('/api/favorites/count');
+      if (response.ok) {
+        const { count } = await response.json();
+        set({ favoritesCount: count });
+      }
+    } catch (error) {
+      console.error('Failed to fetch favorites count:', error);
+    }
+  },
 }));

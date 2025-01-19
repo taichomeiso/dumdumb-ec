@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { use } from 'react';
 import { useSession } from 'next-auth/react';
+import { Header } from '@/components/Header';
 
 export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -15,9 +14,23 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const id = use(params).id;
+  const [error, setError] = useState(null);
+  const [cartItemsCount, setCartItemsCount] = useState(0);
+  const id = React.use(params).id;
 
   useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        const response = await fetch('/api/cart');
+        if (response.ok) {
+          const cart = await response.json();
+          setCartItemsCount(cart.length);
+        }
+      } catch (error) {
+        console.error('カート数の取得エラー:', error);
+      }
+    };
+
     const fetchProduct = async () => {
       try {
         const response = await fetch(`/api/products/${id}`);
@@ -38,13 +51,14 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         }
       } catch (error) {
         console.error('Error:', error);
-        alert(error.message);
+        setError(error.message);
         router.push('/');
       }
     };
 
     if (id) {
       fetchProduct();
+      fetchCartCount();
     }
   }, [id, router, session?.user?.id]);
 
@@ -76,6 +90,8 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         throw new Error(data.error || 'カートへの追加に失敗しました');
       }
 
+      // カート数を更新
+      setCartItemsCount(prev => prev + quantity);
       alert('カートに追加しました');
     } catch (error) {
       console.error('Cart error:', error);
@@ -111,6 +127,8 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         throw new Error('カートへの追加に失敗しました');
       }
 
+      // カート数を更新
+      setCartItemsCount(prev => prev + quantity);
       router.push('/checkout');
     } catch (error) {
       console.error('Error:', error);
@@ -148,8 +166,20 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
     }
   };
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500 text-xl">{error}</div>
+      </div>
+    );
+  }
+
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">読み込み中...</div>
+      </div>
+    );
   }
 
   const sizes = product.category === 'tshirt' 
@@ -160,17 +190,11 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="bg-white border-b-2 border-black sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <Link href="/" className="text-3xl font-black tracking-tight text-black hover:text-gray-900">
-            dumdumb
-          </Link>
-        </div>
-      </header>
+      <Header cartItemsCount={cartItemsCount} />
 
       <main className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div className="aspect-square rounded-2xl overflow-hidden bg-gray-50">
+          <div className="aspect-square rounded-2xl overflow-hidden bg-gray-50 relative">
             {product.image && (
               <img
                 src={product.image}
